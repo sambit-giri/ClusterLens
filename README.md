@@ -1,6 +1,6 @@
 # ClusterLens
 
-A library to tools to model Galaxy Clustering (GC) and Weak Lensing (WL).. More documentation can be found at its [readthedocs](https://ClusterLens.readthedocs.io/) page.
+A library to tools to model Galaxy Clustering (GC) and Weak Lensing (WL). More documentation can be found at its [readthedocs](https://ClusterLens.readthedocs.io/) page.
 
 ## Package details
 
