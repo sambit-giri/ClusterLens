@@ -27,7 +27,7 @@ def Euclid_par():
     par = {
         "z_mean" : 0.9, 
         "z_edges": np.array([0.001,0.42,0.56,0.68,0.79,0.90,1.02,1.15,1.32,1.58,2.50]),
-        "ni_z_file": 'Euclid_ni_z.pkl', # None
+        "nzi_file": 'Euclid2020_nzi.pkl', # None, #
         "bias": 'IST:F', #{'IST:F': np.array([1.10,1.22,1.27,1.32,1.36,1.40,1.44,1.50,1.57,1.74])}, # {"Tutusaus2020": np.array([1.0,2.5,2.8,1.6])}
 
         "aia": 1.72,
@@ -52,9 +52,11 @@ def code_par():
         "Nk"  : 100,                  # number of k bins
         "lmin": 1,                    # 1/Mpc, min wavenumber
         "lmax": 5000,                 # 1/Mpc, max wavenumber
-        "Nl"  : 60,                   # number of k bins
+        "Nl"  : 200,                  # number of k bins
         "c"   : 3e8,                  # m/s
         "Cl_struct": '2D',
+        "integrator": 'quad',         # options: quad, trapezoid, simpson
+        "n_integrator": 500,          # number of bins used in e.g. trapezoid and simpson
         }
     return Bunch(par)
 
@@ -77,12 +79,23 @@ def cosmo_par():
         }
     return Bunch(par)
 
+def bcemu_par():
+    bcmdict = {'log10Mc': 13.32,
+                'mu'     : 0.93,
+                'thej'   : 4.235,  
+                'gamma'  : 2.25,
+                'delta'  : 6.40,
+                'eta'    : 0.15,
+                'deta'   : 0.14,
+                }
+    return Bunch(bcmdict)
 
 def par():
     par = Bunch({
         "cosmo": cosmo_par(),
         "code" : code_par(),
         "telescope": Euclid_par(),
+        "bcemu": bcemu_par(),
         })
     return par
 

@@ -38,5 +38,4 @@ class GalaxyBias:
         else:
             print('{} bias prescription is not implemented'.format(kind))
             bias_fct = lambda z: None
-
         return bias_fct(z)

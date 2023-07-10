@@ -1,4 +1,5 @@
 import numpy as np 
+from time import time 
 import matplotlib.pyplot as plt
 plt.rcParams['font.family'] = 'serif'
 plt.rcParams['mathtext.fontset'] = 'cm' #'dejavuserif' #'stix' #
@@ -10,8 +11,11 @@ param = ClusterLens.par()
 # Power spectrum
 zs = np.logspace(np.log10(param.code.zmin),np.log10(param.code.zmax),param.code.Nz)
 ks = np.logspace(np.log10(param.code.kmin),np.log10(param.code.kmax),param.code.Nk)
-CCL = ClusterLens.Cosmology(param) #ClusterLens.InterfaceCCL(param)
+t0 = time()
+CCL = ClusterLens.InterfaceCCL(param) # ClusterLens.Cosmology(param) #
+print('Cosmology class intialisation | runtime: {:.1f} s'. format(time()-t0)); t0 = time()
 pk  = CCL.power_spectrum(k=ks, z=zs)
+print('Power spectrum estimation | runtime: {:.1f} s'. format(time()-t0)); t0 = time()
 
 # Plot
 fig, ax = plt.subplots(1,1,figsize=(7,6))
@@ -56,7 +60,9 @@ print('min-max log10kl: {:.2f}, {:.2f}'.format(np.log10(k_ls.min()), np.log10(k_
 # plt.tight_layout()
 # plt.show()
 
+t0 = time()
 Pkl_interp = CCL.create_Pkl_interpolator()
+print('Power spectrum P(z,k_l) interpolator creation | runtime: {:.1f} s'. format(time()-t0)); t0 = time()
 
 # Plot
 lplot = [17.59,32.96,61.75,115.67,216.70,405.95,760.5,1424.7,2668.99,5000]

@@ -1,7 +1,9 @@
 import numpy as np
 from time import time 
+import pickle 
 from scipy.interpolate import RegularGridInterpolator
 from scipy.integrate import simps, quad
+from scipy.interpolate import splev, splrep
 
 class Euclid2020:
     def __init__(self, param, verbose=None):
@@ -65,7 +67,30 @@ class Euclid2020:
         nz_i = lambda z,i: numerator_integral(z,z_i[i],z_i[i+1])/nz_i_norm[i]
         self.nz_i = nz_i
         return nz_i
-        
+
+    def normalized_galaxy_density(self, verbose=True, z_nbins=500):
+        param = self.param 
+        try:
+            nzi_dict = self.nzi_dict
+        except:
+            try: 
+                nzi_dict = pickle.load(open(param.telescope.nzi_file, 'rb'))
+                if verbose: print('data read from {} file'.format(param.telescope.nzi_file))
+                self.nzi_dict = nzi_dict
+            except:
+                if verbose:
+                    if param.telescope.nzi_file is None: print('No file name provided in param.')
+                    else: print('Creating the file as it was not found...')
+                zs = np.linspace(param.code.zmin,param.code.zmax,z_nbins)
+                nz_i = self.galaxy_density_at_zbin_i()
+                nzi_dict = {i: nz_i(zs,i) for i,zi in enumerate(param.telescope.z_edges[:-1])}
+                nzi_dict['z'] = zs 
+                self.nzi_dict = nzi_dict
+                if param.telescope.nzi_file is not None:
+                    pickle.dump(nzi_dict, open(param.telescope.nzi_file, 'wb'))
+                    if verbose: print('...data saved as {}'.format(param.telescope.nzi_file))
+        self.nzi = lambda z,i: splev(z, splrep(nzi_dict['z'], nzi_dict[i]))
+        return self.nzi
 
 class Telescope(Euclid2020):
     def __init__(self, param, verbose=None):

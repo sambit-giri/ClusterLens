@@ -1,7 +1,6 @@
 import numpy as np
 from time import time
-from scipy.interpolate import RegularGridInterpolator, interp1d
-from scipy.interpolate import splev, splrep
+from scipy.interpolate import RegularGridInterpolator, interp1d, splev, splrep
 
 import pyccl as ccl
 # import pyhmcode
@@ -133,7 +132,7 @@ class InterfaceCCL:
         if self.verbose: print('...done')
         return Pk_interp 
     
-    def create_Pkl_interpolator(self, param=None, method='linear',
+    def create_Pkl_interpolator(self, param=None, method='linear', 
                                 ells=None, ks=None, zs=None, a=None):
         if self.verbose: print('Creating the Pk_interpolator...')
         param = self.param
