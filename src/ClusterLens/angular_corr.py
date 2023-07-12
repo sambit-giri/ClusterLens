@@ -1,6 +1,6 @@
 import numpy as np 
 from time import time 
-from tqdm import tqdm
+# from tqdm import tqdm
 from scipy import integrate #import quad, simpson, romb, trapezoid
 from scipy.interpolate import splev, splrep
 
@@ -8,7 +8,7 @@ from .constants import *
 from .weight_func import WeightFunctions
 
 class AngularCoefficients(WeightFunctions):
-    def __init__(self, param, Cosmology, GalaxyBias, Telescope, z_nbins=100, integrator=None, pk_suppression=None):
+    def __init__(self, param, Cosmology, GalaxyBias, Telescope, z_nbins=100, integrator=None, ps_suppression=None):
         '''
         Angular Coefficients computed using the Limber approximation.
         '''
@@ -17,10 +17,10 @@ class AngularCoefficients(WeightFunctions):
         # # self.set_cosmology(param)
         self.integrator = integrator if integrator is not None else param.code.integrator
         self.z_nbins = z_nbins if z_nbins is not None else {'W': param.code.n_integrator, 'C': param.code.n_integrator}
-        self.Cosmology.pk_suppression = pk_suppression if pk_suppression is not None else param.cosmo.pk_suppression
+        self.Cosmology.ps_suppression = ps_suppression if ps_suppression is not None else param.cosmo.ps_suppression
         if param.code.verbose:
-            if self.Cosmology.pk_suppression is None: print('DMO | No suppression.')
-            else: print(self.Cosmology.pk_suppression)
+            if self.Cosmology.ps_suppression is None: print('DMO | No suppression.')
+            else: print(self.Cosmology.ps_suppression)
 
     def C_AB(self, W_A, W_B, Pkl, integrator=None): 
         '''

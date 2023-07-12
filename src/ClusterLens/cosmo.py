@@ -6,11 +6,11 @@ import pyccl as ccl
 # import pyhmcode
 
 class InterfaceCCL:
-    def __init__(self, param, verbose=None, pk_suppression=None):
+    def __init__(self, param, verbose=None, ps_suppression=None):
         self.verbose = param.code.verbose if verbose is None else verbose
         self.param = param
         self.cosmo = self.set_cosmology(param) 
-        self.pk_suppression = pk_suppression if pk_suppression is not None else param.cosmo.pk_suppression
+        self.ps_suppression = ps_suppression if ps_suppression is not None else param.cosmo.ps_suppression
         # self.prepare_z_cdist_table()
         self.prepare_D_table()
 
@@ -48,13 +48,15 @@ class InterfaceCCL:
 
     def z_to_a(self, z): return 1/(1+z)
 
-    def prepare_D_table(self, z_nbins=30, k=3):
+    def prepare_D_table(self, k=3, z_nbins=30):
         print('Creating z vs D(z) table...')
         tstart = time()
-        zz = np.linspace(self.param.code.zmin,self.param.code.zmax,z_nbins)
-        pk = self.power_spectrum(k=self.param.code.kmin, z=zz)
-        yy = np.sqrt(pk['pk_lin']/pk['pk_lin'][0])
-        D_table = lambda z: splev(z, splrep(zz,yy,k=k))
+        # zz = np.linspace(self.param.code.zmin,self.param.code.zmax,z_nbins)
+        # kk = self.param.code.kmin
+        try: pk_dict = self.pk_dict
+        except: pk_dict = self.power_spectrum() # k=self.param.code.kmin, z=zz
+        yy = np.sqrt(pk_dict['pk_lin'][:,0]/pk_dict['pk_lin'][0,0])
+        D_table = lambda z: splev(z, splrep(pk_dict['z'],yy,k=k))
         self.D_table = D_table
         print('...table created in {:.1f} s'.format(time()-tstart))
         return D_table
@@ -91,23 +93,29 @@ class InterfaceCCL:
         return cdist  
 
     def power_spectrum(self, param=None, k=None, z=None, a=None):
-        param = self.param
-        if z is None: z = np.logspace(np.log10(param.code.zmin),np.log10(param.code.zmax),param.code.Nz)
-        if k is None: k = np.logspace(np.log10(param.code.kmin),np.log10(param.code.kmax),param.code.Nk)
-        if a is None: a = 1/(1+z)
-        try: cosmo = self.set_cosmology(param)
-        except: cosmo = self.cosmo
-        # Compute the linear matter power spectrum
-        pk_l  = ccl.linear_matter_power(cosmo, k, a)
-        # Compute the non-linear matter power spectrum
-        pk_nl = ccl.nonlin_matter_power(cosmo, k, a)
-        pk_suppress = self.pk_suppression
-        # if pk_suppress is not None: print(pk_nl.shape,pk_suppress(z,k).shape)
-        return {'z': z,
-                'k': k,
-                'pk_lin': pk_l,
-                'pk_nonlin': pk_nl if pk_suppress is None else pk_nl*pk_suppress(z,k),
-                }
+        try:
+            pk_dict = self.pk_dict
+        except:
+            param = self.param
+            if z is None: z = np.logspace(np.log10(param.code.zmin),np.log10(param.code.zmax),param.code.Nz)
+            if k is None: k = np.logspace(np.log10(param.code.kmin),np.log10(param.code.kmax),param.code.Nk)
+            if a is None: a = 1/(1+z)
+            try: cosmo = self.set_cosmology(param)
+            except: cosmo = self.cosmo
+            # Compute the linear matter power spectrum
+            pk_l  = ccl.linear_matter_power(cosmo, k, a)
+            # Compute the non-linear matter power spectrum
+            pk_nl = ccl.nonlin_matter_power(cosmo, k, a)
+            ps_suppress = self.ps_suppression
+            # if ps_suppress is not None: print(pk_nl.shape,ps_suppress(z,k).shape)
+            pk_dict = {
+                    'z': z,
+                    'k': k,
+                    'pk_lin': pk_l,
+                    'pk_nonlin': pk_nl if ps_suppress is None else pk_nl*ps_suppress(z,k),
+                    }
+            self.pk_dict = pk_dict
+        return pk_dict
 
     def ell_to_kl(self, ell, z=None, a=None):
         param = self.param
