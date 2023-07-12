@@ -68,8 +68,9 @@ class Euclid2020:
         self.nz_i = nz_i
         return nz_i
 
-    def normalized_galaxy_density(self, verbose=True, z_nbins=500):
+    def normalized_galaxy_density(self, verbose=None, z_nbins=500):
         param = self.param 
+        if verbose is None: param.code.verbose
         try:
             nzi_dict = self.nzi_dict
         except:

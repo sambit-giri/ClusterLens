@@ -49,7 +49,7 @@ class InterfaceCCL:
     def z_to_a(self, z): return 1/(1+z)
 
     def prepare_D_table(self, k=3, z_nbins=30):
-        print('Creating z vs D(z) table...')
+        if self.verbose: print('Creating z vs D(z) table...')
         tstart = time()
         # zz = np.linspace(self.param.code.zmin,self.param.code.zmax,z_nbins)
         # kk = self.param.code.kmin
@@ -58,7 +58,7 @@ class InterfaceCCL:
         yy = np.sqrt(pk_dict['pk_lin'][:,0]/pk_dict['pk_lin'][0,0])
         D_table = lambda z: splev(z, splrep(pk_dict['z'],yy,k=k))
         self.D_table = D_table
-        print('...table created in {:.1f} s'.format(time()-tstart))
+        if self.verbose: print('...table created in {:.1f} s'.format(time()-tstart))
         return D_table
 
     def D(self, z): 
@@ -75,14 +75,14 @@ class InterfaceCCL:
     def prepare_z_cdist_table(self):
         try: cosmo = self.cosmo 
         except: cosmo = self.set_cosmology(self.param)
-        print('Creating z vs cdist table...')
+        if self.verbose: print('Creating z vs cdist table...')
         tstart = time()
         param = self.param 
         zs = np.logspace(np.log10(param.code.zmin),np.log10(param.code.zmax),500)
         rs = cosmo.comoving_radial_distance(self.z_to_a(zs))  #Mpc
         fn_log10dcom = interp1d(np.log10(zs), np.log10(rs), fill_value="extrapolate")
         self.fn_log10dcom = fn_log10dcom
-        print('...table created in {:.1f} s'.format(time()-tstart))
+        if self.verbose: print('...table created in {:.1f} s'.format(time()-tstart))
         return None
 
     def z_to_cdist(self, z):
