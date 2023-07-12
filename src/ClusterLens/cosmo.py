@@ -6,10 +6,11 @@ import pyccl as ccl
 # import pyhmcode
 
 class InterfaceCCL:
-    def __init__(self, param, verbose=None):
+    def __init__(self, param, verbose=None, pk_suppression=None):
         self.verbose = param.code.verbose if verbose is None else verbose
         self.param = param
         self.cosmo = self.set_cosmology(param) 
+        self.pk_suppression = pk_suppression if pk_suppression is not None else param.cosmo.pk_suppression
         # self.prepare_z_cdist_table()
         self.prepare_D_table()
 
@@ -29,12 +30,17 @@ class InterfaceCCL:
                         mass_split = 'normal',
                         w0 = param.cosmo.w0,
                         wa = param.cosmo.wa,
-                        T_CMB = param.cosmo.Tcmb,
+                        T_CMB   = param.cosmo.Tcmb,
+                        mu_0    = 0,
+                        sigma_0 = 0,
+                        transfer_function      = param.cosmo.transfer_function, 
+                        matter_power_spectrum  = param.cosmo.matter_power_spectrum, 
+                        baryons_power_spectrum = param.cosmo.baryons_power_spectrum, 
+                        mass_function          = param.cosmo.mass_function, 
+                        halo_concentration     = param.cosmo.halo_concentration,
                         bcm_log10Mc = None,
                         bcm_etab    = None,
                         bcm_ks      = None,
-                        mu_0    = 0,
-                        sigma_0 = 0,
                     )
         return cosmo 
     
@@ -95,10 +101,12 @@ class InterfaceCCL:
         pk_l  = ccl.linear_matter_power(cosmo, k, a)
         # Compute the non-linear matter power spectrum
         pk_nl = ccl.nonlin_matter_power(cosmo, k, a)
+        pk_suppress = self.pk_suppression
+        # if pk_suppress is not None: print(pk_nl.shape,pk_suppress(z,k).shape)
         return {'z': z,
                 'k': k,
                 'pk_lin': pk_l,
-                'pk_nonlin': pk_nl,
+                'pk_nonlin': pk_nl if pk_suppress is None else pk_nl*pk_suppress(z,k),
                 }
 
     def ell_to_kl(self, ell, z=None, a=None):

@@ -1,5 +1,6 @@
 import numpy as np 
 from time import time 
+from tqdm import tqdm
 from scipy import integrate #import quad, simpson, romb, trapezoid
 from scipy.interpolate import splev, splrep
 
@@ -7,7 +8,7 @@ from .constants import *
 from .weight_func import WeightFunctions
 
 class AngularCoefficients(WeightFunctions):
-    def __init__(self, param, Cosmology, GalaxyBias, Telescope, z_nbins=100, integrator=None):
+    def __init__(self, param, Cosmology, GalaxyBias, Telescope, z_nbins=100, integrator=None, pk_suppression=None):
         '''
         Angular Coefficients computed using the Limber approximation.
         '''
@@ -16,6 +17,10 @@ class AngularCoefficients(WeightFunctions):
         # # self.set_cosmology(param)
         self.integrator = integrator if integrator is not None else param.code.integrator
         self.z_nbins = z_nbins if z_nbins is not None else {'W': param.code.n_integrator, 'C': param.code.n_integrator}
+        self.Cosmology.pk_suppression = pk_suppression if pk_suppression is not None else param.cosmo.pk_suppression
+        if param.code.verbose:
+            if self.Cosmology.pk_suppression is None: print('DMO | No suppression.')
+            else: print(self.Cosmology.pk_suppression)
 
     def C_AB(self, W_A, W_B, Pkl, integrator=None): 
         '''
@@ -43,6 +48,14 @@ class AngularCoefficients(WeightFunctions):
         else:
             CABij = np.vectorize(lambda l: c_kmps*integrate.quad(integrand, zmin, zmax, args=(l,))[0])
         return CABij
+
+    def dict_to_2Darray(self, C_AB_dict):
+        param = self.param 
+        C_AB_array = C_AB_dict['ells']
+        for i,zi in enumerate(param.telescope.z_edges[:-1]):
+            for j,zj in enumerate(param.telescope.z_edges[:i+1]):
+                C_AB_array = np.vstack((C_AB_array,C_AB_dict[i,j]))
+        return C_AB_array.T
     
     def C_LL(self, ells=None, verbose=True, **kwargs):
         '''
@@ -68,7 +81,7 @@ class AngularCoefficients(WeightFunctions):
                 WL_j = lambda z: splev(z, splrep(zs,WL_dict[j])) 
                 C_LL = self.C_AB(WL_i, WL_j, Pkl_interp)
                 C_LL_3D[i,j] = C_LL(ells)
-                if verbose: print('{0:2d}| {1:2d}, {2:2d}| time elapsed = {5:.1f} s'.format(count, i, j, zi, zj, time()-tstart))
+                if verbose and i==j: print('{0:2d}| {1:2d}, {2:2d}| time elapsed = {5:.1f} s'.format(count, i, j, zi, zj, time()-tstart))
         if verbose: print('...done')
         return C_LL_3D
 
@@ -96,7 +109,7 @@ class AngularCoefficients(WeightFunctions):
                 WG_j = lambda z: splev(z, splrep(zs,WG_dict[j])) 
                 C_GG = self.C_AB(WG_i, WG_j, Pkl_interp)
                 C_GG_3D[i,j] = C_GG(ells)
-                if verbose: print('{0:2d}| {1:2d}, {2:2d}| time elapsed = {5:.1f} s'.format(count, i, j, zi, zj, time()-tstart))
+                if verbose and i==j: print('{0:2d}| {1:2d}, {2:2d}| time elapsed = {5:.1f} s'.format(count, i, j, zi, zj, time()-tstart))
         if verbose: print('...done')
         return C_GG_3D
     
@@ -115,7 +128,7 @@ class AngularCoefficients(WeightFunctions):
         WL_dict = self.get_weight_function_dict('L', verbose=verbose, z_nbins=z_nbins)
         # zs = WG_dict['z']; print('z_nbins = {}, {}'.format(z_nbins, zs.shape))
         
-        if verbose:print('Estimating the Galaxy-Lensing Angular Coefficient...')
+        if verbose: print('Estimating the Galaxy-Lensing Angular Coefficient...')
         C_GL_3D = {'ells': ells}
         tstart, count = time(), 0
         for i,zi in enumerate(param.telescope.z_edges[:-1]):
@@ -125,7 +138,7 @@ class AngularCoefficients(WeightFunctions):
                 WL_j = lambda z: splev(z, splrep(WL_dict['z'],WL_dict[j])) 
                 C_GL = self.C_AB(WG_i, WL_j, Pkl_interp)
                 C_GL_3D[i,j] = C_GL(ells)
-                if verbose: print('{0:2d}| {1:2d}, {2:2d}| time elapsed = {5:.1f} s'.format(count, i, j, zi, zj, time()-tstart))
+                if verbose and i==j: print('{0:2d}| {1:2d}, {2:2d}| time elapsed = {5:.1f} s'.format(count, i, j, zi, zj, time()-tstart))
         if verbose: print('...done')
         return C_GL_3D
     

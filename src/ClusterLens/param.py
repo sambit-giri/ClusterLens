@@ -76,6 +76,12 @@ def cosmo_par():
         "Ok" : 0,
         "Neff" : 3.046,
         "Tcmb" : 2.725,
+        "ps_suppression" : None,
+        "transfer_function"      : 'boltzmann_camb',
+        "matter_power_spectrum"  : 'halofit', 
+        "baryons_power_spectrum" : 'nobaryons', 
+        "mass_function"          : 'tinker10', 
+        "halo_concentration"     : 'duffy2008',
         }
     return Bunch(par)
 
