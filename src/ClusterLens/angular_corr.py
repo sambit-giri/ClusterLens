@@ -57,6 +57,11 @@ class AngularCoefficients(WeightFunctions):
                 C_AB_array = np.vstack((C_AB_array,C_AB_dict[i,j]))
         return C_AB_array.T
     
+    def array_2D_to_1D(self, Cl_2D, ell_bins, z_pairs, method='C'):
+        if method=='F': Cl_1D = np.array([Cl_2D[elli, ij] for elli in range(ell_bins) for ij in range(z_pairs)])
+        else: Cl_1D = np.array([Cl_2D[elli, ij] for ij in range(z_pairs) for elli in range(ell_bins)])
+        return Cl_1D
+    
     def C_LL(self, ells=None, verbose=True, **kwargs):
         '''
         Cosmic Shear Angular Correlation.
